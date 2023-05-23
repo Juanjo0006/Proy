@@ -98,8 +98,6 @@ def jugar():
         print('Empate.')
 
 # Iniciar el juego
-jugar_blackjack()
-
 pass
 
 
@@ -115,7 +113,7 @@ def main():
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
-            jugar_blackjack()
+            jugar()
         elif opcion == "2":
             mostrar_estadisticas()
         elif opcion == "3":
