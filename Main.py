@@ -1,84 +1,127 @@
-#Maun.py
-from Juego import *
+import Baraja
+import Mano
 
-def crear_usuario():
-    nombre = input("Ingresa tu nombre: ")
-    usuario = Usuario(nombre)
-    return usuario
+def mostrar_menu():
+    print("Bienvenido al Blackjack")
+    print("1. Jugar")
+    print("2. Estadísticas de puntos")
+    print("3. Salir")
 
-def seleccionar_usuario(usuarios):
-    print("Selecciona un usuario o crea uno nuevo:\n")
-    for i, usuario in enumerate(usuarios):
-        print(f"{i + 1}. {usuario.nombre}")
-    print(f"{len(usuarios) + 1}. Crear usuario nuevo")
-    opcion = input("Elige una opción: ")
+def obtener_nombre_usuario():
+    nombre = input("Ingrese su nombre de usuario: ")
+    archivo = open("usuarios.txt", "w")
+    archivo.write(nombre)
+    archivo.close()
+
+def obtener_nombre_guardado():
     try:
-        opcion = int(opcion)
-        if opcion > 0 and opcion <= len(usuarios):
-            return usuarios[opcion - 1]
-        elif opcion == len(usuarios) + 1:
-            return crear_usuario()
-        else:
-            raise ValueError
-    except ValueError:
-        print("Opción inválida. Intenta de nuevo.")
-        return seleccionar_usuario(usuarios)
+        archivo = open("usuarios.txt", "r")
+        nombre = archivo.read()
+        archivo.close()
+        return nombre
+    except FileNotFoundError:
+        return None
 
-def mostrar_estadisticas(usuario):
-    print(f"Estadísticas de {usuario.nombre}:")
-    for i, resultado in enumerate(usuario.resultados[-5:]):
-        print(f"Juego {i + 1}: {resultado}")
-    input("Presiona Enter para continuar...")
+def registrar_puntos(nombre, puntos):
+    archivo = open("estadisticas.txt", "a")
+    archivo.write(nombre + "," + str(puntos) + "\n")
+    archivo.close()
 
-def jugar(usuario):
-    juego = Juego(usuario)
+def mostrar_estadisticas():
+    try:
+        archivo = open("estadisticas.txt", "r")
+        print("Estadísticas de puntos:")
+        for linea in archivo:
+            nombre, puntos = linea.strip().split(",")
+            print(nombre + ": " + puntos)
+        archivo.close()
+    except FileNotFoundError:
+        print("No hay estadísticas de puntos disponibles.")
+
+def jugar():
+    nombre_usuario = obtener_nombre_guardado()
+    if nombre_usuario is None:
+        obtener_nombre_usuario()
+        nombre_usuario = obtener_nombre_guardado()
+
+    baraja_juego = Baraja.crear_baraja()
+    mano_jugador = []
+    mano_dealer = []
+
+    # Repartir las primeras dos cartas
+    Baraja.repartir_carta(baraja_juego, mano_jugador)
+    Baraja.repartir_carta(baraja_juego, mano_dealer)
+    Baraja.repartir_carta(baraja_juego, mano_jugador)
+    Baraja.repartir_carta(baraja_juego, mano_dealer)
+
+    # Mostrar las cartas iniciales
+    print('Tu mano:', mano_jugador)
+    print('Carta del dealer:', mano_dealer[0])
+
+    # Jugar la mano del jugador
     while True:
-        limpiar_pantalla()
-        print("Bienvenido a Blackjack\n")
-        print(f"Jugador: {usuario.nombre}\n")
-        print(f"Fichas: {juego.fichas}\n")
-        print("1. Nueva partida")
-        print("2. Ver estadísticas")
-        print("3. Salir\n")
-        opcion = input("Elige una opción: ")
-        if opcion == '1':
-            resultado = juego.jugar()
-            if resultado == 'ganaste':
-                print("¡Felicidades, ganaste!")
-            elif resultado == 'perdiste':
-                print("Lo siento, perdiste.")
-            elif resultado == 'empate':
-                print("Empate.")
-            input("Presiona Enter para continuar...")
-        elif opcion == '2':
-            mostrar_estadisticas(usuario)
-        elif opcion == '3':
-            break
+        opcion = input('¿Quieres pedir otra carta? (s/n): ')
+        if opcion.lower() == 's':
+            Baraja.repartir_carta(baraja_juego, mano_jugador)
+            print('Tu mano:', mano_jugador)
+            if Mano.calcular_puntuacion(mano_jugador) > 21:
+                print('Te has pasado de 21. ¡Has perdido!')
+                registrar_puntos(nombre_usuario, 0)
+                return
         else:
-            print("Opción inválida. Intenta de nuevo.")
-    juego.guardar_resultados()
+            break
+
+    # Jugar la mano del dealer
+    while Mano.calcular_puntuacion(mano_dealer) < 17:
+        Baraja.repartir_carta(baraja_juego, mano_dealer)
+
+    # Mostrar las manos finales
+    print('Tu mano:', mano_jugador)
+    print('Carta del dealer:', mano_dealer)
+
+    # Calcular puntuaciones
+    puntuacion_jugador = Mano.calcular_puntuacion(mano_jugador)
+    puntuacion_dealer = Mano.calcular_puntuacion(mano_dealer)
+
+    # Determinar el resultado
+    if puntuacion_jugador > 21:
+        print('Te has pasado de 21. ¡Has perdido!')
+        registrar_puntos(nombre_usuario, 0)
+    elif puntuacion_dealer > 21:
+        print('El dealer se ha pasado de 21. ¡Has ganado!')
+    
+    elif puntuacion_jugador > puntuacion_dealer:
+        print('¡Has ganado!')
+    elif puntuacion_dealer > puntuacion_jugador:
+        print('Has perdido.')
+    else: 
+        print('Empate.')
+
+# Iniciar el juego
+jugar_blackjack()
+
+pass
+
 
 def main():
-    usuarios = Usuario.cargar_usuarios()
+    nombre_usuario = obtener_nombre_guardado()
+
+    if nombre_usuario is None:
+        obtener_nombre_usuario()
+        nombre_usuario = obtener_nombre_guardado()
+
     while True:
-        limpiar_pantalla()
-        print("Bienvenido a Blackjack\n")
-        print("1. Seleccionar usuario")
-        print("2. Crear usuario nuevo")
-        print("3. Salir\n")
-        opcion = input("Elige una opción: ")
-        if opcion == '1':
-            usuario = seleccionar_usuario(usuarios)
-            jugar(usuario)
-        elif opcion == '2':
-            usuario = crear_usuario()
-            usuarios.append(usuario)
-            jugar(usuario)
-        elif opcion == '3':
+        mostrar_menu()
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "1":
+            jugar_blackjack()
+        elif opcion == "2":
+            mostrar_estadisticas()
+        elif opcion == "3":
             break
         else:
-            print("Opción inválida. Intenta de nuevo.")
-    Usuario.guardar_usuarios(usuarios)
+            print("Opción inválida.")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

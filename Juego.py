@@ -1,114 +1,58 @@
-#Juego.py
-import Deck as Deck
-import Cartas as C
-import Mano as M
-import random
+import Baraja
+import Mano
 
-class game:
-    def __init__(self, playernames):
-        self.winer = ""
-        
-        deck = D.Deck()
-        deck.shuffle = ()
+# Jugar al blackjack
+def jugar_blackjack():
+    baraja_juego = Baraja.crear_baraja()
+    mano_jugador = []
+    mano_crupier = []
 
-        playerhanslist = []
-        for player in playernames: 
-            
-            playerhand = M.mano(player)
-            playerhand.add_new_card(deck.deal())
-            playerhand.add_new_card(deck.deal())
-            playerhanslist.append(playerhand)
+    # Repartir las primeras dos cartas
+    Baraja.repartir_carta(baraja_juego, mano_jugador)
+    Baraja.repartir_carta(baraja_juego, mano_crupier)
+    Baraja.repartir_carta(baraja_juego, mano_jugador)
+    Baraja.repartir_carta(baraja_juego, mano_crupier)
 
-        dealerhand= M,mano("Dealer")
-        playerhand.add_new_card(deck.deal())
-        playerhand.add_new_card(deck.deal())
-        
-        
-    def calcular_puntos(self) -> int:
-        puntos = 0
-        tiene_as = False
-        for carta in self.cartas:
-            valor = carta[1]
-            if valor.isnumeric():
-                puntos += int(valor)
-            elif valor in ('Jota', 'Reina', 'Rey'):
-                puntos += 10
-            else:
-                tiene_as = True
-                puntos += 1
+    # Mostrar las cartas iniciales
+    print('Tu mano:', mano_jugador)
+    print('Carta del crupier:', mano_crupier[0])
 
-        if tiene_as and puntos <= 11:
-            puntos += 10
-
-        return puntos
-
-    def agregar_carta(self, carta: tuple):
-        self.cartas.append(carta)
-
-class Jugador:
-    def __init__(self, nombre):
-        self.nombre = nombre
-        self.mano = None
-
-    def jugar(self, baraja: Deck):
-        self.mano = Mano(baraja.repartir(2))
-
-    def pedir_carta(self, baraja: Deck):
-        self.mano.agregar_carta(baraja.repartir(1)[0])
-
-
-
-class Juego:
-    def __init__(self, jugador, dealer, baraja):
-        self.jugador = jugador
-        self.dealer = dealer
-        self.baraja = baraja
-
-    def jugar(self):
-        self.jugador.jugar(self.baraja)
-        self.dealer.jugar(self.baraja)
-
-        print(f"\nEl dealer muestra una carta: {self.dealer.mano_visible.cartas[0]}")
-        print(f"Tus cartas: {self.jugador.mano.cartas} - ({self.jugador.mano.calcular_puntos()} puntos)")
-
-        if self.jugador.mano.calcular_puntos() == 21:
-            print("¡Blackjack! ¡Ganaste!")
-            return 'ganado'
-        
-        while True:
-            opcion = input("¿Quieres otra carta? (S/N): ")
-            if opcion.lower() == 's':
-                self.jugador.pedir_carta(self.baraja)
-                print(f"Tu carta: {self.jugador.mano.cartas[-1]}")
-                
-                puntos = self.jugador.mano.calcular_puntos()
-                print(f"Tus cartas: {self.jugador.mano.cartas} - ({puntos} puntos)")
-
-                if puntos > 21:
-                    print("Te pasaste de 21. Perdiste.")
-                    return 'perdido'
-            else:
-                break
-
-        dealer_puntos = self.dealer.mano_visible.calcular_puntos()
-        print(f"Las cartas del dealer son: {self.dealer.mano_visible.cartas} - ({dealer_puntos} puntos)")
-
-        while dealer_puntos < 17:
-            print("El dealer toma otra carta.")
-            self.dealer.mano_visible.agregar_carta(self.baraja.repartir(1)[0])
-            dealer_puntos = self.dealer.mano_visible.calcular_puntos()
-            print(f"Las cartas del dealer son: {self.dealer.mano_visible.cartas} - ({dealer_puntos} puntos)")
-
-        if dealer_puntos > 21:
-            print("El dealer se pasó de 21. Ganaste.")
-            return 'ganado'
-        elif dealer_puntos == puntos:
-            print("Es un empate.")
-            return 'empate'
-        elif dealer_puntos > puntos:
-            print("El dealer ganó.")
-            return 'perdido'
+    # Jugar la mano del jugador
+    while True:
+        opcion = input('¿Quieres pedir otra carta? (s/n): ')
+        if opcion.lower() == 's':
+            Baraja.repartir_carta(baraja_juego, mano_jugador)
+            print('Tu mano:', mano_jugador)
+            if Mano.calcular_puntuacion(mano_jugador) > 21:
+                print('Te has pasado de 21. ¡Has perdido!')
+                return
         else:
-            print("Ganaste.")
-            return 'ganado'
+            break
 
+    # Jugar la mano del crupier
+    while Mano.calcular_puntuacion(mano_crupier) < 17:
+        Baraja.repartir_carta(baraja_juego, mano_crupier)
+
+    # Mostrar las manos finales
+    print('Tu mano:', mano_jugador)
+    print('Carta del crupier:', mano_crupier)
+
+    # Calcular puntuaciones
+    puntuacion_jugador = Mano.calcular_puntuacion(mano_jugador)
+    puntuacion_crupier = Mano.calcular_puntuacion(mano_crupier)
+
+    # Determinar el resultado
+    if puntuacion_jugador > 21:
+        print('Te has pasado de 21. ¡Has perdido!')
+    elif puntuacion_crupier > 21:
+        print('El crupier se ha pasado de 21. ¡Has ganado!')
+    
+    elif puntuacion_jugador > puntuacion_crupier:
+        print('¡Has ganado!')
+    elif puntuacion_crupier > puntuacion_jugador:
+        print('Has perdido.')
+    else: 
+        print('Empate.')
+
+# Iniciar el juego
+jugar_blackjack()

@@ -1,17 +1,22 @@
-import Deck as Deck
-import Cartas as C
-import random
+# Calcular el valor de una mano
 
 
-class mano:
-    def __init__(self):
-        self.mano_oculta = None
-        self.mano_visible = None
+def calcular_puntuacion(mano):
+    puntuacion = 0
+    ases = 0
+    for carta in mano:
+        valor = carta[0]
+        if valor.isnumeric():
+            puntuacion += int(valor)
+        elif valor == 'As':
+            puntuacion += 11
+            ases += 1
+        else:
+            puntuacion += 10
 
-    def jugar(self, baraja: Deck):
-        self.mano_oculta = mano(baraja.repartir(1))
-        self.mano_visible = mano(baraja.repartir(1))
+    # Ajustar el valor de los ases si se pasa de 21
+    while puntuacion > 21 and ases > 0:
+        puntuacion -= 10
+        ases -= 1
 
-    def revelar_carta_oculta(self):
-        self.mano_visible.cartas = self.mano_oculta.cartas + self.mano_visible.cartas
-        self.mano_oculta = None
+    return puntuacion
